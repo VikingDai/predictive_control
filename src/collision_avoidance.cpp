@@ -11,19 +11,20 @@ CollisionAvoidance::~CollisionAvoidance()
   ;
 }
 
-bool CollisionAvoidance::initialize(const boost::shared_ptr<predictive_configuration> &pd_config_ptr)
+bool CollisionAvoidance::initialize(const boost::shared_ptr<predictive_configuration>& pd_config_ptr)
 {
   pd_config_.reset(new predictive_configuration());
   pd_config_->initialize();
-  //pd_config_ = pd_config_ptr;
+  // pd_config_ = pd_config_ptr;
   chain_base_link_ = pd_config_->chain_base_link_;
   chain_root_link_ = pd_config_->chain_root_link_;
 
   // visulize distance information just for debugging purpose
-  marker_pub_ = this->nh_.advertise<visualization_msgs::MarkerArray>("CollisionAvoidance/obstacle_distance_markers", 1, true);
+  marker_pub_ =
+      this->nh_.advertise<visualization_msgs::MarkerArray>("CollisionAvoidance/obstacle_distance_markers", 1, true);
 
   add_obstacle_pub_ = this->nh_.advertise<moveit_msgs::CollisionObject>("obstacle_distance/registerObstacle", 1, true);
-  //add_obstracle_pub_.getNumSubscribers() < 1
+  // add_obstracle_pub_.getNumSubscribers() < 1
 
   // register collision links
   register_link_client_ = nh_.serviceClient<cob_srvs::SetString>("obstacle_distance/registerLinkOfInterest");
@@ -34,7 +35,7 @@ bool CollisionAvoidance::initialize(const boost::shared_ptr<predictive_configura
     ROS_INFO("Collision Avoidance has been activated! Register links!");
     if (!this->registerCollisionLinks())
     {
-        ROS_ERROR("Registration of links failed. CA not possible");
+      ROS_ERROR("Registration of links failed. CA not possible");
     }
   }
   else
@@ -42,21 +43,24 @@ bool CollisionAvoidance::initialize(const boost::shared_ptr<predictive_configura
     ROS_ERROR("Service is not exist yet");
   }
 
-  //ia_server_ = new interactive_markers::InteractiveMarkerServer("marker_server", "", false);
+  // ia_server_ = new interactive_markers::InteractiveMarkerServer("marker_server", "", false);
 
   // subscribe obstacle distances
-  obstacle_distance_sub_ = this->nh_.subscribe("obstacle_distance", 1 , &CollisionAvoidance::obstaclesDistanceCallBack, this);
+  obstacle_distance_sub_ =
+      this->nh_.subscribe("obstacle_distance", 1, &CollisionAvoidance::obstaclesDistanceCallBack, this);
 
   // initialize ros services
-  add_static_obstacles_ = this->nh_.advertiseService("pd_control/add_static_obstacles", &CollisionAvoidance::addStaticObstacleServiceCallBack, this);
-  delete_static_obstacles_ = this->nh_.advertiseService("pd_control/delete_static_obstacles", &CollisionAvoidance::deleteStaticObstacleServiceCallBack, this);
+  add_static_obstacles_ = this->nh_.advertiseService("pd_control/add_static_obstacles",
+                                                     &CollisionAvoidance::addStaticObstacleServiceCallBack, this);
+  delete_static_obstacles_ = this->nh_.advertiseService("pd_control/delete_static_obstacles",
+                                                        &CollisionAvoidance::deleteStaticObstacleServiceCallBack, this);
 
   ROS_WARN("COLLIISION_AVOIDANCE SUCCESFFULLY INITIALIZED!!");
 
   return true;
 }
 
-void CollisionAvoidance::obstaclesDistanceCallBack(const cob_control_msgs::ObstacleDistances::ConstPtr &msg)
+void CollisionAvoidance::obstaclesDistanceCallBack(const cob_control_msgs::ObstacleDistances::ConstPtr& msg)
 {
   relevant_obstacle_distances_.clear();
 
@@ -79,44 +83,43 @@ void CollisionAvoidance::obstaclesDistanceCallBack(const cob_control_msgs::Obsta
   // DEBUG
   if (pd_config_->activate_output_)
   {
-    for (std::map<std::string, cob_control_msgs::ObstacleDistance>::const_iterator it = relevant_obstacle_distances_.begin();
-             it != relevant_obstacle_distances_.end(); ++it)
+    for (std::map<std::string, cob_control_msgs::ObstacleDistance>::const_iterator it =
+             relevant_obstacle_distances_.begin();
+         it != relevant_obstacle_distances_.end(); ++it)
     {
-      ROS_WARN_STREAM("link of interest: "<< it->second.link_of_interest);
-      ROS_WARN_STREAM("Obstacle_id: "<< it->second.obstacle_id);
-      ROS_INFO_STREAM("Frame Vector: "<<it->second.frame_vector);
-      ROS_INFO_STREAM("Nearest_point_frame_vector: " <<it->second.nearest_point_obstacle_vector);
-      ROS_INFO_STREAM("Nearest_point_obstacle_vector: "<<it->second.nearest_point_obstacle_vector);
-      }
-
+      ROS_WARN_STREAM("link of interest: " << it->second.link_of_interest);
+      ROS_WARN_STREAM("Obstacle_id: " << it->second.obstacle_id);
+      ROS_INFO_STREAM("Frame Vector: " << it->second.frame_vector);
+      ROS_INFO_STREAM("Nearest_point_frame_vector: " << it->second.nearest_point_obstacle_vector);
+      ROS_INFO_STREAM("Nearest_point_obstacle_vector: " << it->second.nearest_point_obstacle_vector);
+    }
   }
 
   this->getDistanceCostFunction();
 
   this->visualizeObstacleDistance(relevant_obstacle_distances_);
-
 }
 
 double CollisionAvoidance::getDistanceCostFunction()
 {
   double cost_distance(0.0);
 
-
   if (ignore_obstacles_.empty())
-    {
-    for (std::map<std::string, cob_control_msgs::ObstacleDistance>::const_iterator it = relevant_obstacle_distances_.begin();
+  {
+    for (std::map<std::string, cob_control_msgs::ObstacleDistance>::const_iterator it =
+             relevant_obstacle_distances_.begin();
          it != relevant_obstacle_distances_.end(); ++it)
     {
       ROS_ERROR_STREAM(it->second.link_of_interest);
       ROS_ERROR_STREAM(it->second.obstacle_id);
       ROS_WARN_STREAM(it->second.distance);
-      ROS_INFO_STREAM("Frame Vector: "<<it->second.frame_vector);
-      ROS_INFO_STREAM("Nearest_point_frame_vector: " <<it->second.nearest_point_obstacle_vector);
-      ROS_INFO_STREAM("Nearest_point_obstacle_vector: "<<it->second.nearest_point_obstacle_vector);
+      ROS_INFO_STREAM("Frame Vector: " << it->second.frame_vector);
+      ROS_INFO_STREAM("Nearest_point_frame_vector: " << it->second.nearest_point_obstacle_vector);
+      ROS_INFO_STREAM("Nearest_point_obstacle_vector: " << it->second.nearest_point_obstacle_vector);
 
-      cost_distance += exp( ( (pd_config_->minimum_collision_distance_*pd_config_->minimum_collision_distance_) -
-                             (it->second.distance * it->second.distance) )/ pd_config_->collision_weight_factor_);
-
+      cost_distance += exp(((pd_config_->minimum_collision_distance_ * pd_config_->minimum_collision_distance_) -
+                            (it->second.distance * it->second.distance)) /
+                           pd_config_->collision_weight_factor_);
     }
   }
   else
@@ -124,35 +127,37 @@ double CollisionAvoidance::getDistanceCostFunction()
     // ignoring obstacles which recieved request of allowed collision
     for (auto it = ignore_obstacles_.begin(); it != ignore_obstacles_.end(); ++it)
     {
-      for (std::map<std::string, cob_control_msgs::ObstacleDistance>::const_iterator it_map = relevant_obstacle_distances_.begin();
+      for (std::map<std::string, cob_control_msgs::ObstacleDistance>::const_iterator it_map =
+               relevant_obstacle_distances_.begin();
            it_map != relevant_obstacle_distances_.end(); ++it_map)
       {
         // both string are equal than execute if loop
         ROS_WARN_STREAM(it_map->second.obstacle_id);
-        if (it->find(it_map->second.obstacle_id) != std::string::npos || it->find(it_map->second.link_of_interest) != std::string::npos)
+        if (it->find(it_map->second.obstacle_id) != std::string::npos ||
+            it->find(it_map->second.link_of_interest) != std::string::npos)
         {
           ROS_INFO("Ignoring %s obstacle from list", it->c_str());
         }
         else
         {
-          cost_distance += exp( ( (pd_config_->minimum_collision_distance_*pd_config_->minimum_collision_distance_) -
-                                 (it_map->second.distance * it_map->second.distance) )/ pd_config_->collision_weight_factor_);
+          cost_distance += exp(((pd_config_->minimum_collision_distance_ * pd_config_->minimum_collision_distance_) -
+                                (it_map->second.distance * it_map->second.distance)) /
+                               pd_config_->collision_weight_factor_);
         }
       }
-     }
     }
+  }
 
-  ROS_WARN_STREAM("COLLISION COST: "<<cost_distance);
+  ROS_WARN_STREAM("COLLISION COST: " << cost_distance);
 
   return cost_distance;
 }
 
 bool CollisionAvoidance::registerCollisionOjbect(const std::string& obstacle_name)
 {
-
   moveit_msgs::CollisionObject collision_object;
   collision_object.id = "Interactive Box";
-  collision_object.header.frame_id =  obstacle_name;
+  collision_object.header.frame_id = obstacle_name;
   collision_object.operation = moveit_msgs::CollisionObject::ADD;
 
   shape_msgs::SolidPrimitive primitive;
@@ -164,7 +169,7 @@ bool CollisionAvoidance::registerCollisionOjbect(const std::string& obstacle_nam
   pose.orientation.w = 1.0;
   collision_object.primitive_poses.push_back(pose);
 
-  //compose interactive marker
+  // compose interactive marker
   geometry_msgs::PoseStamped stamped;
   stamped.header.frame_id = pd_config_->chain_root_link_;
   stamped.header.stamp = ros::Time(0).now();
@@ -185,35 +190,37 @@ void CollisionAvoidance::configureInteractiveMarker()
 
 bool CollisionAvoidance::registerCollisionLinks()
 {
-    ROS_WARN_COND( this->pd_config_->collision_check_links_.size() <= 0,
-                  "No collision_check_links set for this chain. Nothing will be registered. Ensure parameters are set correctly.");
+  ROS_WARN_COND(this->pd_config_->collision_check_links_.size() <= 0, "No collision_check_links set for this chain. "
+                                                                      "Nothing will be registered. Ensure parameters "
+                                                                      "are set correctly.");
 
-    for (std::vector<std::string>::const_iterator it = this->pd_config_->collision_check_links_.begin();
-         it != this->pd_config_->collision_check_links_.end();
-         it++)
+  for (std::vector<std::string>::const_iterator it = this->pd_config_->collision_check_links_.begin();
+       it != this->pd_config_->collision_check_links_.end(); it++)
+  {
+    ROS_INFO_STREAM("Trying to register for " << *it);
+    cob_srvs::SetString r;
+    r.request.data = *it;
+    if (register_link_client_.call(r))
     {
-        ROS_INFO_STREAM("Trying to register for " << *it);
-        cob_srvs::SetString r;
-        r.request.data = *it;
-        if (register_link_client_.call(r))
-        {
-            ROS_INFO_STREAM("Called registration service with success: " << int(r.response.success) << ". Got message: " << r.response.message);
-            if (!r.response.success)
-            {
-                return false;
-            }
-        }
-        else
-        {
-            ROS_WARN_STREAM("Failed to call registration service for namespace: " << nh_.getNamespace());
-            return false;
-        }
+      ROS_INFO_STREAM("Called registration service with success: " << int(r.response.success)
+                                                                   << ". Got message: " << r.response.message);
+      if (!r.response.success)
+      {
+        return false;
+      }
     }
+    else
+    {
+      ROS_WARN_STREAM("Failed to call registration service for namespace: " << nh_.getNamespace());
+      return false;
+    }
+  }
 
-    return true;
+  return true;
 }
 
-void CollisionAvoidance::visualizeObstacleDistance(const std::map<std::string, cob_control_msgs::ObstacleDistance> &distnace_matrix)
+void CollisionAvoidance::visualizeObstacleDistance(
+    const std::map<std::string, cob_control_msgs::ObstacleDistance>& distnace_matrix)
 {
   visualization_msgs::MarkerArray marker_array;
 
@@ -238,7 +245,7 @@ void CollisionAvoidance::visualizeObstacleDistance(const std::map<std::string, c
     start.y = it->second.nearest_point_obstacle_vector.y;
     start.z = it->second.nearest_point_obstacle_vector.z;
 
-    //ROS_WARN_STREAM(start);
+    // ROS_WARN_STREAM(start);
 
     // Vector pointing to the nearest point on the link collision geometry (e.g. mesh)
     geometry_msgs::Point end;
@@ -246,7 +253,7 @@ void CollisionAvoidance::visualizeObstacleDistance(const std::map<std::string, c
     end.y = it->second.nearest_point_frame_vector.y;
     end.z = it->second.nearest_point_frame_vector.z;
 
-    //ROS_WARN_STREAM(end);
+    // ROS_WARN_STREAM(end);
 
     marker_vector.color.a = 1.0;
     marker_vector.color.g = 1.0;
@@ -287,12 +294,11 @@ void CollisionAvoidance::visualizeObstacleDistance(const std::map<std::string, c
   this->marker_pub_.publish(marker_array);
 }
 
-bool CollisionAvoidance::addStaticObstacleServiceCallBack(predictive_control::StaticObstacleRequest &request,
-                                                          predictive_control::StaticObstacleResponse &response)
+bool CollisionAvoidance::addStaticObstacleServiceCallBack(predictive_control::StaticObstacleRequest& request,
+                                                          predictive_control::StaticObstacleResponse& response)
 {
   if (request.file_name.empty())
   {
-
     // first remove form environment
     moveit_msgs::CollisionObject co = request.static_collision_object;
     co.operation = moveit_msgs::CollisionObject::REMOVE;
@@ -316,7 +322,6 @@ bool CollisionAvoidance::addStaticObstacleServiceCallBack(predictive_control::St
 
   else if (!request.file_name.empty())
   {
-
     moveit_msgs::CollisionObject co;
     this->readDataFromFile(request.file_name, request.static_collision_object.id, co);
 
@@ -330,7 +335,7 @@ bool CollisionAvoidance::addStaticObstacleServiceCallBack(predictive_control::St
       response.success = true;
     }*/
 
-    //add_obstacle_pub_.publish(co);
+    // add_obstacle_pub_.publish(co);
     response.message = "Add static obstacles Successfully!!";
     response.success = true;
   }
@@ -345,8 +350,8 @@ bool CollisionAvoidance::addStaticObstacleServiceCallBack(predictive_control::St
   return true;
 }
 
-bool CollisionAvoidance::deleteStaticObstacleServiceCallBack(predictive_control::StaticObstacleRequest &request,
-                                                             predictive_control::StaticObstacleResponse &response)
+bool CollisionAvoidance::deleteStaticObstacleServiceCallBack(predictive_control::StaticObstacleRequest& request,
+                                                             predictive_control::StaticObstacleResponse& response)
 {
   if (request.file_name.empty())
   {
@@ -369,116 +374,115 @@ bool CollisionAvoidance::deleteStaticObstacleServiceCallBack(predictive_control:
   return true;
 }
 
-
-void CollisionAvoidance::readDataFromFile(const std::string &file_name,
-                                          const std::string &object_name,
-                                          moveit_msgs::CollisionObject &co)
+void CollisionAvoidance::readDataFromFile(const std::string& file_name, const std::string& object_name,
+                                          moveit_msgs::CollisionObject& co)
 {
-    geometry_msgs::PoseStamped stamped;
+  geometry_msgs::PoseStamped stamped;
 
-    // get transformation, assume object name same as frame of object
-    getTransform(chain_root_link_, object_name, stamped);
+  // get transformation, assume object name same as frame of object
+  getTransform(chain_root_link_, object_name, stamped);
 
-    // initialize static objects
-    std::ifstream myfile;
-    std::string line, id;
+  // initialize static objects
+  std::ifstream myfile;
+  std::string line, id;
 
-    std::string object_id;
-    object_id = object_name;
+  std::string object_id;
+  object_id = object_name;
 
-    std::string filename = ros::package::getPath("predictive_control") + "/planning_scene/"+ file_name + ".scene";
-    myfile.open(filename.c_str());
+  std::string filename = ros::package::getPath("predictive_control") + "/planning_scene/" + file_name + ".scene";
+  myfile.open(filename.c_str());
 
-    // check file is open
-    if (myfile.is_open())
+  // check file is open
+  if (myfile.is_open())
+  {
+    getline(myfile, line);  // 1 line
+
+    while (!myfile.eof())
     {
-      getline(myfile, line);  //1 line
+      moveit_msgs::CollisionObject collision_obstacle;
+      shape_msgs::SolidPrimitive primitive;
+      primitive.dimensions.resize(3);
 
-      while(!myfile.eof())
-          {
-            moveit_msgs::CollisionObject collision_obstacle;
-            shape_msgs::SolidPrimitive primitive;
-            primitive.dimensions.resize(3);
+      getline(myfile, id);  // 2 line
 
-            getline(myfile, id);  //2 line
+      if (id == ".")
+        break;
 
-            if(id == ".")
-              break;
+      ROS_ERROR_STREAM("object id:" << id);
+      collision_obstacle.id = id;
 
-            ROS_ERROR_STREAM("object id:"<<id);
-            collision_obstacle.id = id;
+      getline(myfile, line);  // 3 line not useful line
+      getline(myfile, line);  // 4 line
 
-            getline(myfile, line);  // 3 line not useful line
-            getline(myfile, line);  // 4 line
-
-            if(line.compare("box") == 0)
-            {
-              primitive.type = shape_msgs::SolidPrimitive::BOX;
-            }
-
-            else if( line.compare("cylinder") == 0)
-            {
-              primitive.type = shape_msgs::SolidPrimitive::CYLINDER;
-            }
-
-            else if( line.compare("sphere") == 0)
-            {
-              primitive.type = shape_msgs::SolidPrimitive::SPHERE;
-            }
-
-            else
-            {
-              std::string message("Shape of object is not defined correctly, check file on location " + filename);
-              ROS_ERROR("StaticCollision: %s", message.c_str());
-              return;
-            }
-
-            //myfile>>primitive.dimensions[0]>>primitive.dimensions[1]>>primitive.dimensions[2];  //5 line
-            myfile>>primitive.dimensions[0] >>primitive.dimensions[1]>>primitive.dimensions[2];  //5 line
-            getline (myfile,line);
-
-            // primitive shapes
-            collision_obstacle.primitives.push_back(primitive);
-
-            myfile>>stamped.pose.position.x>>stamped.pose.position.y>>stamped.pose.position.z;   //6 line
-
-            getline (myfile,line);
-            myfile>>stamped.pose.orientation.x>>stamped.pose.orientation.y>>stamped.pose.orientation.z >> stamped.pose.orientation.w; //7 line
-
-            if( (sqrt(stamped.pose.orientation.w*stamped.pose.orientation.w +
-                stamped.pose.orientation.x*stamped.pose.orientation.x +
-                stamped.pose.orientation.y*stamped.pose.orientation.y +
-                stamped.pose.orientation.z*stamped.pose.orientation.z) ) == 0.0)
-            {
-                stamped.pose.orientation.w = 1.0;
-                stamped.pose.orientation.x = 0.0;
-                stamped.pose.orientation.y = 0.0;
-                stamped.pose.orientation.z = 0.0;
-            }
-
-            ROS_WARN_STREAM(stamped);
-
-            collision_obstacle.operation = moveit_msgs::CollisionObject::ADD;
-
-            // primitive poses
-            collision_obstacle.header.stamp = stamped.header.stamp; //request.primitive_pose.header.stamp;
-            collision_obstacle.header.frame_id = object_name; //request.primitive_pose.header.frame_id;
-            // add object into collision matrix for cost calculation
-            collision_obstacle.primitive_poses.push_back(stamped.pose); //request.primitive_pose;
-
-            getline(myfile, line);	// 8 line not useful line
-            getline(myfile, line);	// 9 line not useful line
-
-            // publishes
-            add_obstacle_pub_.publish(collision_obstacle);
-            ros::Duration(0.5).sleep();
+      if (line.compare("box") == 0)
+      {
+        primitive.type = shape_msgs::SolidPrimitive::BOX;
       }
-      myfile.close();
+
+      else if (line.compare("cylinder") == 0)
+      {
+        primitive.type = shape_msgs::SolidPrimitive::CYLINDER;
+      }
+
+      else if (line.compare("sphere") == 0)
+      {
+        primitive.type = shape_msgs::SolidPrimitive::SPHERE;
+      }
+
+      else
+      {
+        std::string message("Shape of object is not defined correctly, check file on location " + filename);
+        ROS_ERROR("StaticCollision: %s", message.c_str());
+        return;
+      }
+
+      // myfile>>primitive.dimensions[0]>>primitive.dimensions[1]>>primitive.dimensions[2];  //5 line
+      myfile >> primitive.dimensions[0] >> primitive.dimensions[1] >> primitive.dimensions[2];  // 5 line
+      getline(myfile, line);
+
+      // primitive shapes
+      collision_obstacle.primitives.push_back(primitive);
+
+      myfile >> stamped.pose.position.x >> stamped.pose.position.y >> stamped.pose.position.z;  // 6 line
+
+      getline(myfile, line);
+      myfile >> stamped.pose.orientation.x >> stamped.pose.orientation.y >> stamped.pose.orientation.z >>
+          stamped.pose.orientation.w;  // 7 line
+
+      if ((sqrt(stamped.pose.orientation.w * stamped.pose.orientation.w +
+                stamped.pose.orientation.x * stamped.pose.orientation.x +
+                stamped.pose.orientation.y * stamped.pose.orientation.y +
+                stamped.pose.orientation.z * stamped.pose.orientation.z)) == 0.0)
+      {
+        stamped.pose.orientation.w = 1.0;
+        stamped.pose.orientation.x = 0.0;
+        stamped.pose.orientation.y = 0.0;
+        stamped.pose.orientation.z = 0.0;
+      }
+
+      ROS_WARN_STREAM(stamped);
+
+      collision_obstacle.operation = moveit_msgs::CollisionObject::ADD;
+
+      // primitive poses
+      collision_obstacle.header.stamp = stamped.header.stamp;  // request.primitive_pose.header.stamp;
+      collision_obstacle.header.frame_id = object_name;        // request.primitive_pose.header.frame_id;
+      // add object into collision matrix for cost calculation
+      collision_obstacle.primitive_poses.push_back(stamped.pose);  // request.primitive_pose;
+
+      getline(myfile, line);  // 8 line not useful line
+      getline(myfile, line);  // 9 line not useful line
+
+      // publishes
+      add_obstacle_pub_.publish(collision_obstacle);
+      ros::Duration(0.5).sleep();
     }
+    myfile.close();
+  }
 }
 
-
-bool CollisionAvoidance::getTransform(const std::string& from, const std::string& to, geometry_msgs::PoseStamped& stamped_pose)
+bool CollisionAvoidance::getTransform(const std::string& from, const std::string& to,
+                                      geometry_msgs::PoseStamped& stamped_pose)
 {
   bool transform = false;
   tf::StampedTransform stamped_tf;
@@ -493,10 +497,10 @@ bool CollisionAvoidance::getTransform(const std::string& from, const std::string
       tf_listener_.lookupTransform(from, to, ros::Time(0), stamped_tf);
 
       // rotation
-      stamped_pose.pose.orientation.w =  stamped_tf.getRotation().getW();
-      stamped_pose.pose.orientation.x =  stamped_tf.getRotation().getX();
-      stamped_pose.pose.orientation.y =  stamped_tf.getRotation().getY();
-      stamped_pose.pose.orientation.z =  stamped_tf.getRotation().getZ();
+      stamped_pose.pose.orientation.w = stamped_tf.getRotation().getW();
+      stamped_pose.pose.orientation.x = stamped_tf.getRotation().getX();
+      stamped_pose.pose.orientation.y = stamped_tf.getRotation().getY();
+      stamped_pose.pose.orientation.z = stamped_tf.getRotation().getZ();
 
       // translation
       stamped_pose.pose.position.x = stamped_tf.getOrigin().x();
@@ -504,7 +508,7 @@ bool CollisionAvoidance::getTransform(const std::string& from, const std::string
       stamped_pose.pose.position.z = stamped_tf.getOrigin().z();
 
       // header frame_id should be parent frame
-      stamped_pose.header.frame_id = stamped_tf.frame_id_;  //from or to
+      stamped_pose.header.frame_id = stamped_tf.frame_id_;  // from or to
       stamped_pose.header.stamp = ros::Time(0);
 
       transform = true;

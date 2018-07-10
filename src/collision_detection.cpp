@@ -3,7 +3,7 @@
 
 CollisionRobot::CollisionRobot()
 {
-;
+  ;
 }
 
 CollisionRobot::~CollisionRobot()
@@ -32,15 +32,16 @@ bool CollisionRobot::initializeCollisionRobot()
   ros::NodeHandle nh_collisionRobot("predictive_control/collisionRobot");
   marker_pub_ = nh_collisionRobot.advertise<visualization_msgs::MarkerArray>("collision_ball", 1);
 
-  ROS_INFO("===== Collision Ball marker published with topic: ~/predictive_control/collisionRobot/collision_ball =====");
+  ROS_INFO("===== Collision Ball marker published with topic: ~/predictive_control/collisionRobot/collision_ball "
+           "=====");
   ROS_WARN("COLLISIONROBOT INITIALIZED!!");
 
   return true;
 }
 
 // update collsion ball position, publish new position of collision ball
-void CollisionRobot::updateCollisionVolume(const std::vector<Eigen::MatrixXd> &FK_Homogenous_Matrix,
-                                           const std::vector<Eigen::MatrixXd> &Transformation_Matrix)
+void CollisionRobot::updateCollisionVolume(const std::vector<Eigen::MatrixXd>& FK_Homogenous_Matrix,
+                                           const std::vector<Eigen::MatrixXd>& Transformation_Matrix)
 {
   // make sure collsion matrix and marker array should be empty
   clearDataMember();
@@ -48,16 +49,16 @@ void CollisionRobot::updateCollisionVolume(const std::vector<Eigen::MatrixXd> &F
   // DEBUG
   if (predictive_configuration::activate_output_)
   {
-   ROS_WARN("########### Print FK HOMOGENOUS MATRIX ############");
-   for (auto it = FK_Homogenous_Matrix.begin(); it != FK_Homogenous_Matrix.end(); ++it)
-   {
-      std::cout <<"\n" <<*it << std::endl;
-   }
-   ROS_WARN("########## Print Transformation MATRIX ############");
-   for (auto it = Transformation_Matrix.begin(); it != Transformation_Matrix.end(); ++it)
-   {
-      std::cout <<"\n" <<*it << std::endl;
-   }
+    ROS_WARN("########### Print FK HOMOGENOUS MATRIX ############");
+    for (auto it = FK_Homogenous_Matrix.begin(); it != FK_Homogenous_Matrix.end(); ++it)
+    {
+      std::cout << "\n" << *it << std::endl;
+    }
+    ROS_WARN("########## Print Transformation MATRIX ############");
+    for (auto it = Transformation_Matrix.begin(); it != Transformation_Matrix.end(); ++it)
+    {
+      std::cout << "\n" << *it << std::endl;
+    }
   }
 
   // generate/update collision matrix
@@ -67,9 +68,9 @@ void CollisionRobot::updateCollisionVolume(const std::vector<Eigen::MatrixXd> &F
   if (predictive_configuration::activate_output_)
   {
     ROS_WARN("===== COLLISION MATRIX =====");
-    for (auto const& it: collision_matrix_)
+    for (auto const& it : collision_matrix_)
     {
-      ROS_INFO_STREAM("CollisionRobot: "<<it.first << " -> stamped: \n" << it.second);
+      ROS_INFO_STREAM("CollisionRobot: " << it.first << " -> stamped: \n" << it.second);
     }
   }
 
@@ -88,7 +89,7 @@ void CollisionRobot::updateCollisionVolume(const std::vector<Eigen::MatrixXd> &F
                        predictive_configuration::collision_weight_factor_);
 
   // DEBUG
-  if (true) //predictive_configuration::activate_output_
+  if (true)  // predictive_configuration::activate_output_
   {
     ROS_WARN("===== COLLISION COST VECTOR =====");
     std::cout << collision_cost_vector_.transpose() << std::endl;
@@ -96,41 +97,37 @@ void CollisionRobot::updateCollisionVolume(const std::vector<Eigen::MatrixXd> &F
 }
 
 // create collision detection, specifically center position of collision matrix
-void CollisionRobot::generateCollisionVolume(const std::vector<Eigen::MatrixXd> &FK_Homogenous_Matrix,
-                                             const std::vector<Eigen::MatrixXd> &Transformation_Matrix)
+void CollisionRobot::generateCollisionVolume(const std::vector<Eigen::MatrixXd>& FK_Homogenous_Matrix,
+                                             const std::vector<Eigen::MatrixXd>& Transformation_Matrix)
 {
-
   int point = 0u, counter = 0u;
   std::string key = "point_";
 
-  //for (auto const& it: FK_Homogenous_Matrix)
+  // for (auto const& it: FK_Homogenous_Matrix)
   for (auto it = FK_Homogenous_Matrix.begin(); it != FK_Homogenous_Matrix.end(); ++it)
   {
-    if (Transformation_Matrix[counter](2,3) > 0.15 && counter != 0)
+    if (Transformation_Matrix[counter](2, 3) > 0.15 && counter != 0)
     {
       // distance between two frame are more than ball randius than add intermidate ball
-      if( Transformation_Matrix[counter](2,3) > 0.20) //predictive_configuration::ball_radius_
+      if (Transformation_Matrix[counter](2, 3) > 0.20)  // predictive_configuration::ball_radius_
       {
-        ROS_INFO("CollisionRobot: Add intermidiate volume with point: %s", (key+std::to_string(point)).c_str());
+        ROS_INFO("CollisionRobot: Add intermidiate volume with point: %s", (key + std::to_string(point)).c_str());
 
         geometry_msgs::PoseStamped stamped;
         KDL::Frame frame, previous_frame;
 
         // transform Eigen Matrix to Kdl Frame
-        transformEigenMatrixToKDL(*(it-1), previous_frame);
+        transformEigenMatrixToKDL(*(it - 1), previous_frame);
         transformEigenMatrixToKDL(*it, frame);
 
         // fill up pose stamped
         stamped.header.frame_id = predictive_configuration::chain_root_link_;
         stamped.header.stamp = ros::Time().now();
-        stamped.pose.position.x = previous_frame.p.x() + ((frame.p.x() - previous_frame.p.x())*0.5);
-        stamped.pose.position.y = previous_frame.p.y() + ((frame.p.y() - previous_frame.p.y())*0.5);
-        stamped.pose.position.z = previous_frame.p.z() + ((frame.p.z() - previous_frame.p.z())*0.5);
-        previous_frame.M.GetQuaternion(stamped.pose.orientation.x,
-                              stamped.pose.orientation.y,
-                              stamped.pose.orientation.z,
-                              stamped.pose.orientation.w
-                              );
+        stamped.pose.position.x = previous_frame.p.x() + ((frame.p.x() - previous_frame.p.x()) * 0.5);
+        stamped.pose.position.y = previous_frame.p.y() + ((frame.p.y() - previous_frame.p.y()) * 0.5);
+        stamped.pose.position.z = previous_frame.p.z() + ((frame.p.z() - previous_frame.p.z()) * 0.5);
+        previous_frame.M.GetQuaternion(stamped.pose.orientation.x, stamped.pose.orientation.y,
+                                       stamped.pose.orientation.z, stamped.pose.orientation.w);
         // broadcast static frame
         createStaticFrame(stamped, key + std::to_string(point));
         collision_matrix_[key + std::to_string(point)] = stamped;
@@ -150,11 +147,8 @@ void CollisionRobot::generateCollisionVolume(const std::vector<Eigen::MatrixXd> 
       stamped.pose.position.x = frame.p.x();
       stamped.pose.position.y = frame.p.y();
       stamped.pose.position.z = frame.p.z();
-      frame.M.GetQuaternion(stamped.pose.orientation.x,
-                            stamped.pose.orientation.y,
-                            stamped.pose.orientation.z,
-                            stamped.pose.orientation.w
-                            );
+      frame.M.GetQuaternion(stamped.pose.orientation.x, stamped.pose.orientation.y, stamped.pose.orientation.z,
+                            stamped.pose.orientation.w);
 
       collision_matrix_[key + std::to_string(point)] = stamped;
       point = point + 1;
@@ -165,12 +159,11 @@ void CollisionRobot::generateCollisionVolume(const std::vector<Eigen::MatrixXd> 
     }
     counter = counter + 1;
   }
-
 }
 
 // generate collision around robot body
-void CollisionRobot::visualizeCollisionVolume(const geometry_msgs::PoseStamped &center,
-                                              const double &radius, const uint32_t &ball_id)
+void CollisionRobot::visualizeCollisionVolume(const geometry_msgs::PoseStamped& center, const double& radius,
+                                              const uint32_t& ball_id)
 {
   visualization_msgs::Marker marker;
   marker.type = visualization_msgs::Marker::SPHERE;
@@ -205,8 +198,7 @@ void CollisionRobot::visualizeCollisionVolume(const geometry_msgs::PoseStamped &
 
 // compute collsion cost such way that below minimum distance cost goes to infinite, and far distance costs goes to zero
 void CollisionRobot::computeCollisionCost(const std::map<std::string, geometry_msgs::PoseStamped> collision_matrix,
-                                                     const double &collision_min_distance,
-                                                     const double &weight_factor)
+                                          const double& collision_min_distance, const double& weight_factor)
 {
   collision_cost_vector_ = Eigen::VectorXd(collision_matrix.size());
 
@@ -223,24 +215,26 @@ void CollisionRobot::computeCollisionCost(const std::map<std::string, geometry_m
         // logistic cost function
         // Nonlinear Model Predictive Control for Multi-Micro Aerial Vehicle Robust Collision Avoidance
         // https://arxiv.org/pdf/1703.01164.pdf ... equation(10)
-        ROS_DEBUG(" '%s'  <---> '%s'", it_out->first.c_str(),it_in->first.c_str());
-        //dist += exp( ((collision_min_distance) -
+        ROS_DEBUG(" '%s'  <---> '%s'", it_out->first.c_str(), it_in->first.c_str());
+        // dist += exp( ((collision_min_distance) -
         //              (std::abs(getEuclideanDistance(it_out->second.pose, it_in->second.pose))) ) / weight_factor);
-        dist += exp( ((collision_min_distance*collision_min_distance) -
-                      (std::abs(getEuclideanDistance(it_out->second.pose, it_in->second.pose)) * std::abs(getEuclideanDistance(it_out->second.pose, it_in->second.pose))) ) / weight_factor);
+        dist += exp(((collision_min_distance * collision_min_distance) -
+                     (std::abs(getEuclideanDistance(it_out->second.pose, it_in->second.pose)) *
+                      std::abs(getEuclideanDistance(it_out->second.pose, it_in->second.pose)))) /
+                    weight_factor);
 
-        ROS_DEBUG_STREAM("Exponential term: "<<
-                         exp(collision_min_distance - std::abs(getEuclideanDistance(it_out->second.pose, it_in->second.pose)) / weight_factor));
+        ROS_DEBUG_STREAM("Exponential term: " << exp(
+                             collision_min_distance -
+                             std::abs(getEuclideanDistance(it_out->second.pose, it_in->second.pose)) / weight_factor));
       }
     }
-    //store cost of each point into vector
+    // store cost of each point into vector
     collision_cost_vector_(loop_counter) = dist;
   }
 }
 
 // create static frame, just for visualization purpose
-void CollisionRobot::createStaticFrame(const geometry_msgs::PoseStamped &stamped,
-                                       const std::string &frame_name)
+void CollisionRobot::createStaticFrame(const geometry_msgs::PoseStamped& stamped, const std::string& frame_name)
 {
   geometry_msgs::TransformStamped static_transformStamped;
 
@@ -256,16 +250,14 @@ void CollisionRobot::createStaticFrame(const geometry_msgs::PoseStamped &stamped
   static_transformStamped.transform.rotation = stamped.pose.orientation;
 
   ROS_INFO("Created intermediate 'Static Frame' with '%s' parent frame id and '%s' child frame id",
-           stamped.header.frame_id.c_str(), frame_name.c_str()
-           );
+           stamped.header.frame_id.c_str(), frame_name.c_str());
 
   static_broadcaster_.sendTransform(static_transformStamped);
   ros::spinOnce();
 }
 
-//convert KDL to Eigen matrix
-void CollisionRobot::transformKDLToEigenMatrix(const KDL::Frame &frame,
-                                               Eigen::MatrixXd &matrix)
+// convert KDL to Eigen matrix
+void CollisionRobot::transformKDLToEigenMatrix(const KDL::Frame& frame, Eigen::MatrixXd& matrix)
 {
   // translation
   for (unsigned int i = 0; i < 3; ++i)
@@ -276,13 +268,12 @@ void CollisionRobot::transformKDLToEigenMatrix(const KDL::Frame &frame,
   // rotation matrix
   for (unsigned int i = 0; i < 9; ++i)
   {
-    matrix(i/3, i%3) = frame.M.data[i];
+    matrix(i / 3, i % 3) = frame.M.data[i];
   }
 }
 
-//convert Eigen matrix to KDL::Frame
-void CollisionRobot::transformEigenMatrixToKDL(const Eigen::MatrixXd& matrix,
-                                               KDL::Frame& frame)
+// convert Eigen matrix to KDL::Frame
+void CollisionRobot::transformEigenMatrixToKDL(const Eigen::MatrixXd& matrix, KDL::Frame& frame)
 {
   // translation
   for (unsigned int i = 0; i < 3; ++i)
@@ -293,10 +284,9 @@ void CollisionRobot::transformEigenMatrixToKDL(const Eigen::MatrixXd& matrix,
   // rotation matrix
   for (unsigned int i = 0; i < 9; ++i)
   {
-    frame.M.data[i] = matrix(i/3, i%3);
+    frame.M.data[i] = matrix(i / 3, i % 3);
   }
 }
-
 
 //-------------------------------------------------------------------------------------------------------------------------------
 //--------------------------- Static Collision Object Avoidance ----------------------------------
@@ -304,7 +294,7 @@ void CollisionRobot::transformEigenMatrixToKDL(const Eigen::MatrixXd& matrix,
 
 StaticCollision::StaticCollision()
 {
-;
+  ;
 }
 
 StaticCollision::~StaticCollision()
@@ -332,30 +322,34 @@ bool StaticCollision::initializeStaticCollisionObject()
 
   ros::NodeHandle nh_collisionRobot("predictive_control/StaticCollision");
   marker_pub_ = nh_collisionRobot.advertise<visualization_msgs::MarkerArray>("static_collision_object", 1);
-  ROS_INFO("===== static collision marker published with topic: ~/predictive_control/collisionRobot/static_collision_object =====");
+  ROS_INFO("===== static collision marker published with topic: "
+           "~/predictive_control/collisionRobot/static_collision_object =====");
 
   // serice publisher
-  add_static_object_ = nh_collisionRobot.advertiseService("add_static_object", &StaticCollision::addStaticObjectServiceCB, this);
-  remove_static_object_ = nh_collisionRobot.advertiseService("remove_static_object", &StaticCollision::removeStaticObjectServiceCB, this);
-  remove_all_static_objects_ = nh_collisionRobot.advertiseService("remove_all_static_objects", &StaticCollision::removeAllStaticObjectsServiceCB, this);
+  add_static_object_ =
+      nh_collisionRobot.advertiseService("add_static_object", &StaticCollision::addStaticObjectServiceCB, this);
+  remove_static_object_ =
+      nh_collisionRobot.advertiseService("remove_static_object", &StaticCollision::removeStaticObjectServiceCB, this);
+  remove_all_static_objects_ = nh_collisionRobot.advertiseService(
+      "remove_all_static_objects", &StaticCollision::removeAllStaticObjectsServiceCB, this);
   ROS_INFO("===== add static object published with topic: ~/predictive_control/collisionRobot/add_static_object =====");
-  ROS_INFO("===== remove static object published with topic: ~/predictive_control/collisionRobot/remove_static_object =====");
-  ROS_INFO("===== remove static object published with topic: ~/predictive_control/collisionRobot/remove_all_static_objects =====");
-
+  ROS_INFO("===== remove static object published with topic: ~/predictive_control/collisionRobot/remove_static_object "
+           "=====");
+  ROS_INFO("===== remove static object published with topic: "
+           "~/predictive_control/collisionRobot/remove_all_static_objects =====");
 
   ROS_WARN("STATIC COLLISION INITIALIZED!!");
 
   // generate static collision volume
-  //generateStaticCollisionVolume();
-
+  // generateStaticCollisionVolume();
 
   // DEBUG
   if (true)
   {
     ROS_WARN("===== STATIC COLLISION MATRIX =====");
-    for (auto const& it: collision_matrix_)
+    for (auto const& it : collision_matrix_)
     {
-      ROS_INFO_STREAM("StaticCollision: "<<it.first << " -> stamped: \n" << it.second);
+      ROS_INFO_STREAM("StaticCollision: " << it.first << " -> stamped: \n" << it.second);
     }
   }
 
@@ -370,8 +364,8 @@ bool StaticCollision::initializeStaticCollisionObject()
 }
 
 // add collision object into environement
-bool StaticCollision::addStaticObjectServiceCB(predictive_control::StaticCollisionObjectRequest &request,
-                                               predictive_control::StaticCollisionObjectResponse &response)
+bool StaticCollision::addStaticObjectServiceCB(predictive_control::StaticCollisionObjectRequest& request,
+                                               predictive_control::StaticCollisionObjectResponse& response)
 {
   // default response
   response.success = true;
@@ -382,11 +376,11 @@ bool StaticCollision::addStaticObjectServiceCB(predictive_control::StaticCollisi
   {
     ROS_WARN("Recieved add static object service call ...");
 
-  // id should be unique
-  std::string object_id = request.object_id;
+    // id should be unique
+    std::string object_id = request.object_id;
 
-  if (request.object_id.empty())
-    object_id = request.object_name;
+    if (request.object_id.empty())
+      object_id = request.object_name;
 
     // add object into collision matrix for cost calculation
     collision_matrix_[object_id] = request.primitive_pose;
@@ -453,7 +447,6 @@ bool StaticCollision::addStaticObjectServiceCB(predictive_control::StaticCollisi
     marker_array_.markers.push_back(marker);
   }
 
-
   //---------------------------------------------- READ DATA FROM FILES -----------------------------
   // Here assume that at this moment object name is same as frame name
   // read static object dimenstion from files
@@ -471,94 +464,96 @@ bool StaticCollision::addStaticObjectServiceCB(predictive_control::StaticCollisi
     std::string object_id;
     object_id = request.object_id;
 
-    std::string filename = ros::package::getPath("predictive_control") + "/planning_scene/"+ request.file_name + ".scene";
+    std::string filename = ros::package::getPath("predictive_control") + "/planning_scene/" + request.file_name + ".sce"
+                                                                                                                  "ne";
     myfile.open(filename.c_str());
 
     // check file is open
     if (myfile.is_open())
     {
-      getline(myfile, line);  //1 line
+      getline(myfile, line);  // 1 line
 
-      while(!myfile.eof())
-          {
-            visualization_msgs::Marker marker;
+      while (!myfile.eof())
+      {
+        visualization_msgs::Marker marker;
 
-            getline(myfile, id);  //2 line
+        getline(myfile, id);  // 2 line
 
-            if(id == ".")
-              break;
+        if (id == ".")
+          break;
 
-            ROS_ERROR_STREAM("object id:"<<id);
-            object_id = id;
+        ROS_ERROR_STREAM("object id:" << id);
+        object_id = id;
 
-            getline(myfile, line);  // 3 line not useful line
-            getline(myfile, line);  // 4 line
+        getline(myfile, line);  // 3 line not useful line
+        getline(myfile, line);  // 4 line
 
-            if(line.compare("box") == 0)
-            {
-              marker.type = marker.CUBE;
-            }
+        if (line.compare("box") == 0)
+        {
+          marker.type = marker.CUBE;
+        }
 
-            else if( line.compare("cylinder") == 0)
-            {
-              marker.type = marker.CYLINDER;
-            }
+        else if (line.compare("cylinder") == 0)
+        {
+          marker.type = marker.CYLINDER;
+        }
 
-            else if( line.compare("sphere") == 0)
-            {
-              marker.type = marker.SPHERE;
-            }
+        else if (line.compare("sphere") == 0)
+        {
+          marker.type = marker.SPHERE;
+        }
 
-            else
-            {
-              response.success = false;
-              std::string message("Shape of object is not defined correctly, check file on location " + filename);
-              ROS_ERROR("StaticCollision: %s", message.c_str());
-              response.message = message;
-              return false;
-            }
+        else
+        {
+          response.success = false;
+          std::string message("Shape of object is not defined correctly, check file on location " + filename);
+          ROS_ERROR("StaticCollision: %s", message.c_str());
+          response.message = message;
+          return false;
+        }
 
-            //myfile>>primitive.dimensions[0]>>primitive.dimensions[1]>>primitive.dimensions[2];  //5 line
-            myfile>>marker.scale.x >>marker.scale.y>>marker.scale.z;  //5 line
-            getline (myfile,line);
+        // myfile>>primitive.dimensions[0]>>primitive.dimensions[1]>>primitive.dimensions[2];  //5 line
+        myfile >> marker.scale.x >> marker.scale.y >> marker.scale.z;  // 5 line
+        getline(myfile, line);
 
-            myfile>>marker.pose.position.x>>marker.pose.position.y>>marker.pose.position.z;   //6 line
+        myfile >> marker.pose.position.x >> marker.pose.position.y >> marker.pose.position.z;  // 6 line
 
-            getline (myfile,line);
-            myfile>>marker.pose.orientation.x>>marker.pose.orientation.y>>marker.pose.orientation.z >> marker.pose.orientation.w; //7 line
+        getline(myfile, line);
+        myfile >> marker.pose.orientation.x >> marker.pose.orientation.y >> marker.pose.orientation.z >>
+            marker.pose.orientation.w;  // 7 line
 
-            if( (sqrt(stamped.pose.orientation.w*stamped.pose.orientation.w +
-                stamped.pose.orientation.x*stamped.pose.orientation.x +
-                stamped.pose.orientation.y*stamped.pose.orientation.y +
-                stamped.pose.orientation.z*stamped.pose.orientation.z) ) == 0.0)
-            {
-                stamped.pose.orientation.w = 1.0;
-                stamped.pose.orientation.x = 0.0;
-                stamped.pose.orientation.y = 0.0;
-                stamped.pose.orientation.z = 0.0;
-            }
+        if ((sqrt(stamped.pose.orientation.w * stamped.pose.orientation.w +
+                  stamped.pose.orientation.x * stamped.pose.orientation.x +
+                  stamped.pose.orientation.y * stamped.pose.orientation.y +
+                  stamped.pose.orientation.z * stamped.pose.orientation.z)) == 0.0)
+        {
+          stamped.pose.orientation.w = 1.0;
+          stamped.pose.orientation.x = 0.0;
+          stamped.pose.orientation.y = 0.0;
+          stamped.pose.orientation.z = 0.0;
+        }
 
-            ROS_WARN_STREAM(stamped);
+        ROS_WARN_STREAM(stamped);
 
-            marker.header.stamp = stamped.header.stamp; //request.primitive_pose.header.stamp;
-            marker.header.frame_id = request.object_name; //request.primitive_pose.header.frame_id;
-            //marker.pose = stamped.pose;
+        marker.header.stamp = stamped.header.stamp;    // request.primitive_pose.header.stamp;
+        marker.header.frame_id = request.object_name;  // request.primitive_pose.header.frame_id;
+        // marker.pose = stamped.pose;
 
-            // add object into collision matrix for cost calculation
-            collision_matrix_[object_id] = stamped; //request.primitive_pose;
+        // add object into collision matrix for cost calculation
+        collision_matrix_[object_id] = stamped;  // request.primitive_pose;
 
-            getline(myfile, line);	// 8 line not useful line
-            getline(myfile, line);	// 9 line not useful line
+        getline(myfile, line);  // 8 line not useful line
+        getline(myfile, line);  // 9 line not useful line
 
-            // texture
-            marker.color.r = 1.0;
-            marker.color.g = 0.0;
-            marker.color.b = 0.0;
-            marker.color.a = 0.1;
-            marker.action = visualization_msgs::Marker::ADD;
-            marker.ns = "preview" + object_id;
-            marker.text = request.file_name+ " " + object_id;
-            marker_array_.markers.push_back(marker);
+        // texture
+        marker.color.r = 1.0;
+        marker.color.g = 0.0;
+        marker.color.b = 0.0;
+        marker.color.a = 0.1;
+        marker.action = visualization_msgs::Marker::ADD;
+        marker.ns = "preview" + object_id;
+        marker.text = request.file_name + " " + object_id;
+        marker_array_.markers.push_back(marker);
       }
       myfile.close();
     }
@@ -574,8 +569,8 @@ bool StaticCollision::addStaticObjectServiceCB(predictive_control::StaticCollisi
 }
 
 // remove collision object from environment
-bool StaticCollision::removeStaticObjectServiceCB(predictive_control::StaticCollisionObjectRequest &request,
-                                                  predictive_control::StaticCollisionObjectResponse &response)
+bool StaticCollision::removeStaticObjectServiceCB(predictive_control::StaticCollisionObjectRequest& request,
+                                                  predictive_control::StaticCollisionObjectResponse& response)
 {
   if (request.file_name.empty())
   {
@@ -634,7 +629,7 @@ bool StaticCollision::removeStaticObjectServiceCB(predictive_control::StaticColl
          it != collision_matrix_.end(); ++it)
     {
       //  just check required char inside the string, if yes than remove it
-      if (it->first.find(request.file_name) !=std::string::npos)
+      if (it->first.find(request.file_name) != std::string::npos)
       {
         collision_matrix_.erase(it);
       }
@@ -648,7 +643,7 @@ bool StaticCollision::removeStaticObjectServiceCB(predictive_control::StaticColl
       if (it->text.find(request.file_name) != std::string::npos)
       {
         it->action = visualization_msgs::Marker::DELETE;
-        //it->ns = it->ns;
+        // it->ns = it->ns;
 
         // make sure first publish it and than remove from list to maintain list
         marker_pub_.publish(marker_array_);
@@ -665,7 +660,7 @@ bool StaticCollision::removeStaticObjectServiceCB(predictive_control::StaticColl
 
       else
       {
-         ++it;
+        ++it;
       }
     }
     ROS_WARN("Hello");
@@ -674,13 +669,11 @@ bool StaticCollision::removeStaticObjectServiceCB(predictive_control::StaticColl
     response.message = ("Successfully remove to the environment");
 
     return true;
-
   }
 }
 
-
-bool StaticCollision::removeAllStaticObjectsServiceCB(predictive_control::StaticCollisionObjectRequest &request,
-                                                      predictive_control::StaticCollisionObjectResponse &response)
+bool StaticCollision::removeAllStaticObjectsServiceCB(predictive_control::StaticCollisionObjectRequest& request,
+                                                      predictive_control::StaticCollisionObjectResponse& response)
 {
   // remove all object from collision matrix list
   for (std::map<std::string, geometry_msgs::PoseStamped>::const_iterator it = collision_matrix_.begin();
@@ -702,33 +695,33 @@ bool StaticCollision::removeAllStaticObjectsServiceCB(predictive_control::Static
   return true;
 }
 // update collsion ball position, publish new position of collision ball
-void StaticCollision::updateStaticCollisionVolume(const std::map<std::string, geometry_msgs::PoseStamped>& robot_critical_points)
+void StaticCollision::updateStaticCollisionVolume(
+    const std::map<std::string, geometry_msgs::PoseStamped>& robot_critical_points)
 {
-
   // DEBUG
   if (predictive_configuration::activate_output_)
   {
-   ROS_WARN("########### Print ROBOT CRITICLE POINT MATRIX ############");
-   for (auto it = robot_critical_points.begin(); it != robot_critical_points.end(); ++it)
-   {
-      std::cout<< it->first.c_str() <<": \n" << it->second << std::endl;
-   }
+    ROS_WARN("########### Print ROBOT CRITICLE POINT MATRIX ############");
+    for (auto it = robot_critical_points.begin(); it != robot_critical_points.end(); ++it)
+    {
+      std::cout << it->first.c_str() << ": \n" << it->second << std::endl;
+    }
   }
 
   // publish
   marker_pub_.publish(marker_array_);
 
   // compute collision cost vectors
-  computeStaticCollisionCost(collision_matrix_, robot_critical_points, 0.10,
-                       predictive_configuration::collision_weight_factor_); //predictive_configuration::minimum_collision_distance_
+  computeStaticCollisionCost(
+      collision_matrix_, robot_critical_points, 0.10,
+      predictive_configuration::collision_weight_factor_);  // predictive_configuration::minimum_collision_distance_
 
   // DEBUG
-  if (true) //predictive_configuration::activate_output_
+  if (true)  // predictive_configuration::activate_output_
   {
     ROS_WARN("===== STATIC COLLISION COST VECTOR =====");
     std::cout << collision_cost_vector_.transpose() << std::endl;
   }
-
 }
 
 // create collision cost for static objects
@@ -739,7 +732,7 @@ void StaticCollision::generateStaticCollisionVolume()
   stamped.header.frame_id = predictive_configuration::chain_root_link_;
   stamped.header.stamp = ros::Time().now();
 
-  //position of static collision object
+  // position of static collision object
   stamped.pose.position.x = 0.0;
   stamped.pose.position.y = 0.0;
   stamped.pose.position.z = 0.10;
@@ -757,7 +750,7 @@ void StaticCollision::generateStaticCollisionVolume()
 }
 
 // visualize static collision object
-void StaticCollision::visualizeStaticCollisionVoulme(const geometry_msgs::PoseStamped &stamped)
+void StaticCollision::visualizeStaticCollisionVoulme(const geometry_msgs::PoseStamped& stamped)
 {
   visualization_msgs::Marker marker;
   marker.type = visualization_msgs::Marker::CUBE;
@@ -788,10 +781,10 @@ void StaticCollision::visualizeStaticCollisionVoulme(const geometry_msgs::PoseSt
 
   // store created marker
   marker_array_.markers.push_back(marker);
-
 }
 
-bool StaticCollision::getTransform(const std::string& from, const std::string& to, geometry_msgs::PoseStamped& stamped_pose)
+bool StaticCollision::getTransform(const std::string& from, const std::string& to,
+                                   geometry_msgs::PoseStamped& stamped_pose)
 {
   bool transform = false;
   tf::StampedTransform stamped_tf;
@@ -806,10 +799,10 @@ bool StaticCollision::getTransform(const std::string& from, const std::string& t
       tf_listener_.lookupTransform(from, to, ros::Time(0), stamped_tf);
 
       // rotation
-      stamped_pose.pose.orientation.w =  stamped_tf.getRotation().getW();
-      stamped_pose.pose.orientation.x =  stamped_tf.getRotation().getX();
-      stamped_pose.pose.orientation.y =  stamped_tf.getRotation().getY();
-      stamped_pose.pose.orientation.z =  stamped_tf.getRotation().getZ();
+      stamped_pose.pose.orientation.w = stamped_tf.getRotation().getW();
+      stamped_pose.pose.orientation.x = stamped_tf.getRotation().getX();
+      stamped_pose.pose.orientation.y = stamped_tf.getRotation().getY();
+      stamped_pose.pose.orientation.z = stamped_tf.getRotation().getZ();
 
       // translation
       stamped_pose.pose.position.x = stamped_tf.getOrigin().x();
@@ -817,7 +810,7 @@ bool StaticCollision::getTransform(const std::string& from, const std::string& t
       stamped_pose.pose.position.z = stamped_tf.getOrigin().z();
 
       // header frame_id should be parent frame
-      stamped_pose.header.frame_id = stamped_tf.frame_id_;  //from or to
+      stamped_pose.header.frame_id = stamped_tf.frame_id_;  // from or to
       stamped_pose.header.stamp = ros::Time(0);
 
       transform = true;
@@ -836,10 +829,8 @@ bool StaticCollision::getTransform(const std::string& from, const std::string& t
   return transform;
 }
 
-
 // create static frame, just for visualization purpose
-void StaticCollision::createStaticFrame(const geometry_msgs::PoseStamped &stamped,
-                                       const std::string &frame_name)
+void StaticCollision::createStaticFrame(const geometry_msgs::PoseStamped& stamped, const std::string& frame_name)
 {
   geometry_msgs::TransformStamped static_transformStamped;
 
@@ -855,127 +846,125 @@ void StaticCollision::createStaticFrame(const geometry_msgs::PoseStamped &stampe
   static_transformStamped.transform.rotation = stamped.pose.orientation;
 
   ROS_INFO("Created intermediate 'Static Frame' with '%s' parent frame id and '%s' child frame id",
-           stamped.header.frame_id.c_str(), frame_name.c_str()
-           );
+           stamped.header.frame_id.c_str(), frame_name.c_str());
 
   static_broadcaster_.sendTransform(static_transformStamped);
   ros::spinOnce();
 }
 
-void StaticCollision::computeStaticCollisionCost(const std::map<std::string, geometry_msgs::PoseStamped> static_collision_matrix,
-                                                 const std::map<std::string, geometry_msgs::PoseStamped> robot_collision_matrix,
-                                                 const double& collision_threshold_distance,
-                                                 const double &weight_factor)
+void StaticCollision::computeStaticCollisionCost(
+    const std::map<std::string, geometry_msgs::PoseStamped> static_collision_matrix,
+    const std::map<std::string, geometry_msgs::PoseStamped> robot_collision_matrix,
+    const double& collision_threshold_distance, const double& weight_factor)
 
 {
   collision_cost_vector_ = Eigen::VectorXd(robot_collision_matrix.size());
   collision_cost_vector_.resize(robot_collision_matrix.size());
 
-  for (auto it: static_collision_matrix)
+  for (auto it : static_collision_matrix)
   {
     ROS_WARN_STREAM(it.first);
-        ROS_WARN_STREAM(it.second);
+    ROS_WARN_STREAM(it.second);
   }
 
-
-/*
-  // iterate to one by one point in collision matrix
-  int loop_counter = 0u;
-  for (auto it_out = static_collision_matrix.begin(); it_out != static_collision_matrix.end(); ++it_out, ++loop_counter)
-  {
-    double dist = 0.0;
-    for (auto it_in = robot_collision_matrix.begin(); it_in != robot_collision_matrix.end(); ++it_in)
+  /*
+    // iterate to one by one point in collision matrix
+    int loop_counter = 0u;
+    for (auto it_out = static_collision_matrix.begin(); it_out != static_collision_matrix.end(); ++it_out,
+    ++loop_counter)
     {
-      // both string are not equal than execute if loop
-      if (it_out->first.find(it_in->first) == std::string::npos)
+      double dist = 0.0;
+      for (auto it_in = robot_collision_matrix.begin(); it_in != robot_collision_matrix.end(); ++it_in)
       {
-        // logistic cost function
-        // Nonlinear Model Predictive Control for Multi-Micro Aerial Vehicle Robust Collision Avoidance
-        // https://arxiv.org/pdf/1703.01164.pdf ... equation(10)
-        ROS_ERROR(" '%s'  <---> '%s'", it_out->first.c_str(),it_in->first.c_str());
-        //dist += exp( ((collision_min_distance) -
-        //              (std::abs(getEuclideanDistance(it_out->second.pose, it_in->second.pose))) ) / weight_factor);
-        dist += exp( ((collision_threshold_distance*collision_threshold_distance) -
-                      (std::abs(CollisionRobot::getEuclideanDistance(it_out->second.pose, it_in->second.pose)) * std::abs(CollisionRobot::getEuclideanDistance(it_out->second.pose, it_in->second.pose))) ) / weight_factor);
+        // both string are not equal than execute if loop
+        if (it_out->first.find(it_in->first) == std::string::npos)
+        {
+          // logistic cost function
+          // Nonlinear Model Predictive Control for Multi-Micro Aerial Vehicle Robust Collision Avoidance
+          // https://arxiv.org/pdf/1703.01164.pdf ... equation(10)
+          ROS_ERROR(" '%s'  <---> '%s'", it_out->first.c_str(),it_in->first.c_str());
+          //dist += exp( ((collision_min_distance) -
+          //              (std::abs(getEuclideanDistance(it_out->second.pose, it_in->second.pose))) ) / weight_factor);
+          dist += exp( ((collision_threshold_distance*collision_threshold_distance) -
+                        (std::abs(CollisionRobot::getEuclideanDistance(it_out->second.pose, it_in->second.pose)) *
+    std::abs(CollisionRobot::getEuclideanDistance(it_out->second.pose, it_in->second.pose))) ) / weight_factor);
 
-        ROS_DEBUG_STREAM("Exponential term: "<<
-                         exp(collision_threshold_distance - std::abs(CollisionRobot::getEuclideanDistance(it_out->second.pose, it_in->second.pose)) / weight_factor));
+          ROS_DEBUG_STREAM("Exponential term: "<<
+                           exp(collision_threshold_distance -
+    std::abs(CollisionRobot::getEuclideanDistance(it_out->second.pose, it_in->second.pose)) / weight_factor));
+        }
       }
-    }
-    //store cost of each point into vector
-    collision_cost_vector_(loop_counter) = dist;
-  }*/
-
+      //store cost of each point into vector
+      collision_cost_vector_(loop_counter) = dist;
+    }*/
 
   int loop_counter = 0u;
   for (auto it_out = robot_collision_matrix.begin(); it_out != robot_collision_matrix.end(); ++it_out, ++loop_counter)
   {
     double dist = 0.0;
     int static_object_counter = 0u;
-    for (auto it_in = static_collision_matrix.begin(); it_in != static_collision_matrix.end(); ++it_in, ++static_object_counter)
+    for (auto it_in = static_collision_matrix.begin(); it_in != static_collision_matrix.end();
+         ++it_in, ++static_object_counter)
     {
-
       if (it_out->first.find(it_in->first) == std::string::npos)
       {
+        // dimension should half of scale
+        double dim_x = marker_array_.markers.at(static_object_counter).scale.x * 0.5;
+        double dim_y = marker_array_.markers.at(static_object_counter).scale.y * 0.5;
+        double dim_z = marker_array_.markers.at(static_object_counter).scale.z * 0.5;
 
-      // dimension should half of scale
-      double dim_x = marker_array_.markers.at(static_object_counter).scale.x*0.5;
-      double dim_y = marker_array_.markers.at(static_object_counter).scale.y*0.5;
-      double dim_z = marker_array_.markers.at(static_object_counter).scale.z*0.5;
+        // move to center of object
+        geometry_msgs::Pose center_pose = it_in->second.pose;
+        center_pose.position.x = (it_in->second.pose.position.x) + dim_x;
+        center_pose.position.y = (it_in->second.pose.position.y) + dim_y;
+        center_pose.position.z = (it_in->second.pose.position.z) + dim_z;
 
-      // move to center of object
-      geometry_msgs::Pose center_pose = it_in->second.pose;
-      center_pose.position.x = (it_in->second.pose.position.x) + dim_x;
-      center_pose.position.y = (it_in->second.pose.position.y) + dim_y;
-      center_pose.position.z = (it_in->second.pose.position.z) + dim_z;
+        // compute error vector from x_negative
+        geometry_msgs::Pose x_negative(center_pose);
+        x_negative.position.x -= dim_x;
+        double dist_x_neg = CollisionRobot::getEuclideanDistance(it_out->second.pose, x_negative);
+        dist += exp((0.010 - dist_x_neg * dist_x_neg) / weight_factor);
+        ROS_WARN_STREAM("dist_x_neg: " << CollisionRobot::getEuclideanDistance(it_out->second.pose, x_negative));
 
-      // compute error vector from x_negative
-      geometry_msgs::Pose x_negative(center_pose);
-      x_negative.position.x -= dim_x;
-      double dist_x_neg = CollisionRobot::getEuclideanDistance(it_out->second.pose, x_negative);
-      dist += exp( (0.010 - dist_x_neg*dist_x_neg)/weight_factor );
-      ROS_WARN_STREAM("dist_x_neg: "<< CollisionRobot::getEuclideanDistance(it_out->second.pose, x_negative));
+        // compute error vector from x_positive
+        geometry_msgs::Pose x_positive(center_pose);
+        x_positive.position.x += dim_x;
+        double dist_x_pos = CollisionRobot::getEuclideanDistance(it_out->second.pose, x_positive);
+        dist += exp((0.010 - dist_x_pos * dist_x_pos) / weight_factor);
+        ROS_WARN_STREAM("dist_x_pos: " << CollisionRobot::getEuclideanDistance(it_out->second.pose, x_positive));
 
-      // compute error vector from x_positive
-      geometry_msgs::Pose x_positive(center_pose);
-      x_positive.position.x += dim_x;
-      double dist_x_pos = CollisionRobot::getEuclideanDistance(it_out->second.pose, x_positive);
-      dist += exp( (0.010 - dist_x_pos*dist_x_pos)/weight_factor );
-      ROS_WARN_STREAM("dist_x_pos: "<< CollisionRobot::getEuclideanDistance(it_out->second.pose, x_positive));
+        // compute error vector from y_negative
+        geometry_msgs::Pose y_negative(center_pose);
+        y_negative.position.y -= dim_y;
+        double dist_y_neg = CollisionRobot::getEuclideanDistance(it_out->second.pose, y_negative);
+        dist += exp((0.010 - dist_y_neg * dist_y_neg) / weight_factor);
+        ROS_WARN_STREAM("dist_y_neg: " << CollisionRobot::getEuclideanDistance(it_out->second.pose, y_negative));
 
-      // compute error vector from y_negative
-      geometry_msgs::Pose y_negative(center_pose);
-      y_negative.position.y -= dim_y;
-      double dist_y_neg = CollisionRobot::getEuclideanDistance(it_out->second.pose, y_negative);
-      dist += exp( (0.010 - dist_y_neg*dist_y_neg)/weight_factor );
-      ROS_WARN_STREAM("dist_y_neg: "<< CollisionRobot::getEuclideanDistance(it_out->second.pose, y_negative));
+        // compute error vector from y_positive
+        geometry_msgs::Pose y_positive(center_pose);
+        y_positive.position.y += dim_y;
+        double dist_y_pos = CollisionRobot::getEuclideanDistance(it_out->second.pose, y_positive);
+        dist += exp((0.010 - dist_y_pos * dist_y_pos) / weight_factor);
+        ROS_WARN_STREAM("dist_y_pos: " << CollisionRobot::getEuclideanDistance(it_out->second.pose, y_positive));
 
-      // compute error vector from y_positive
-      geometry_msgs::Pose y_positive(center_pose);
-      y_positive.position.y += dim_y;
-      double dist_y_pos = CollisionRobot::getEuclideanDistance(it_out->second.pose, y_positive);
-      dist += exp( (0.010 - dist_y_pos*dist_y_pos)/weight_factor );
-      ROS_WARN_STREAM("dist_y_pos: "<< CollisionRobot::getEuclideanDistance(it_out->second.pose, y_positive));
+        // compute error vector from y_negative
+        geometry_msgs::Pose z_negative(center_pose);
+        z_negative.position.z -= dim_z;
+        double dist_z_neg = CollisionRobot::getEuclideanDistance(it_out->second.pose, z_negative);
+        dist += exp((0.010 - dist_z_neg * dist_z_neg) / weight_factor);
+        ROS_WARN_STREAM("dist_z_neg: " << CollisionRobot::getEuclideanDistance(it_out->second.pose, z_negative));
 
-      // compute error vector from y_negative
-      geometry_msgs::Pose z_negative(center_pose);
-      z_negative.position.z -= dim_z;
-      double dist_z_neg = CollisionRobot::getEuclideanDistance(it_out->second.pose, z_negative);
-      dist += exp( (0.010 - dist_z_neg*dist_z_neg)/weight_factor );
-      ROS_WARN_STREAM("dist_z_neg: "<< CollisionRobot::getEuclideanDistance(it_out->second.pose, z_negative));
-
-      // compute error vector from y_positive
-      geometry_msgs::Pose z_positive(center_pose);
-      z_positive.position.z += dim_z;
-      double dist_z_pos = CollisionRobot::getEuclideanDistance(it_out->second.pose, z_positive);
-      dist += exp( (0.010 - dist_z_pos*dist_z_pos)/weight_factor );
-      ROS_WARN_STREAM("dist_z_pos: "<< CollisionRobot::getEuclideanDistance(it_out->second.pose, z_positive));
+        // compute error vector from y_positive
+        geometry_msgs::Pose z_positive(center_pose);
+        z_positive.position.z += dim_z;
+        double dist_z_pos = CollisionRobot::getEuclideanDistance(it_out->second.pose, z_positive);
+        dist += exp((0.010 - dist_z_pos * dist_z_pos) / weight_factor);
+        ROS_WARN_STREAM("dist_z_pos: " << CollisionRobot::getEuclideanDistance(it_out->second.pose, z_positive));
       }
     }
-    //store cost of each point into vector
+    // store cost of each point into vector
     collision_cost_vector_(loop_counter) = dist;
   }
   ROS_ERROR_STREAM("=============== STATIC COLLSION DISTANCE VECRTOR ================= ");
-  std::cout << collision_cost_vector_.transpose()<< std::endl;
-
+  std::cout << collision_cost_vector_.transpose() << std::endl;
 }

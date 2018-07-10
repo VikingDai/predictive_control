@@ -63,10 +63,9 @@ class predictive_control_ros
    * - Extract current position and velocity of manipulator joints
    * - Publish controlled joint velocity
    */
-    //Info: static member for transform std::vector to Eigen::vector
+  // Info: static member for transform std::vector to Eigen::vector
 
 public:
-
   /**
    * @brief predictive_control_ros: Default constructor, allocate memory
    */
@@ -78,7 +77,8 @@ public:
   ~predictive_control_ros();
 
   /**
-   * @brief initialize: Initialize all helper class of predictive control and subscibe joint state and publish controlled joint velocity
+   * @brief initialize: Initialize all helper class of predictive control and subscibe joint state and publish
+   * controlled joint velocity
    * @return: True with successuflly initialize all classes else false
    */
   bool initialize();
@@ -113,11 +113,7 @@ public:
    * @param stamped_pose: Resultant poseStamed between source and target frame
    * @return: true if transform else false
    */
-  bool getTransform(const std::string& from,
-                    const std::string& to,
-                    Eigen::VectorXd& stamped_pose
-                    );
-
+  bool getTransform(const std::string& from, const std::string& to, Eigen::VectorXd& stamped_pose);
 
   bool transformEigenToGeometryPose(const Eigen::VectorXd& eigen_vector, geometry_msgs::Pose& pose);
 
@@ -135,16 +131,15 @@ public:
   ros::Publisher traj_pub_;
 
 private:
-
   ros::NodeHandle nh;
 
   // DEBUG
   bool plotting_result_;
 
-   tf::TransformListener tf_listener_;
+  tf::TransformListener tf_listener_;
 
-   // degree of freedom
-   uint32_t degree_of_freedom_;
+  // degree of freedom
+  uint32_t degree_of_freedom_;
 
   // Clock frequency
   double clock_frequency_;
@@ -169,11 +164,11 @@ private:
   Eigen::VectorXd goal_gripper_pose_;
 
   // current pose hold vector
-  //hold_pose hold_pose_;
+  // hold_pose hold_pose_;
 
   // store pose value for visualize trajectory
-  //geometry_msgs::PoseArray traj_pose_array_;
-    visualization_msgs::MarkerArray traj_marker_array_;
+  // geometry_msgs::PoseArray traj_pose_array_;
+  visualization_msgs::MarkerArray traj_marker_array_;
 
   // Distance between traget frame and tracking frame relative to base link
   Eigen::VectorXd tf_traget_from_tracking_vector_;
@@ -190,9 +185,9 @@ private:
   Eigen::MatrixXd Jacobian_Matrix_;
 
   // Current and last position and velocity from joint state callback
-  //Eigen::VectorXd current_position_;
+  // Eigen::VectorXd current_position_;
   Eigen::VectorXd last_position_;
-  //Eigen::VectorXd current_velocity_;
+  // Eigen::VectorXd current_velocity_;
   Eigen::VectorXd last_velocity_;
 
   // Type of variable used to publish joint velocity
@@ -217,8 +212,8 @@ private:
   // move to goal position action
   boost::scoped_ptr<actionlib::SimpleActionServer<predictive_control::moveAction> > move_action_server_;
 
-  //actionlib::SimpleActionServer<predictive_control::moveAction> move_action_server_;
-  //int moveGoalCallBack(const predictive_control::moveGoalConstPtr& move_action_goal_ptr);
+  // actionlib::SimpleActionServer<predictive_control::moveAction> move_action_server_;
+  // int moveGoalCallBack(const predictive_control::moveGoalConstPtr& move_action_goal_ptr);
 
   /// Action interface
   predictive_control::moveResult move_action_result_;
@@ -249,7 +244,6 @@ private:
    */
   void publishErrorPose(const Eigen::VectorXd& error);
 
-
   void publishTrajectory(void);
 
   /**
@@ -258,9 +252,7 @@ private:
    * @param position_tolerance: tolerance in joint values after reaching minimum and maximum values
    * @return true with position limit violation else false
    */
-  bool checkPositionLimitViolation(const Eigen::VectorXd& joint_position,
-                                   const double& position_tolerance = 0.0
-                                  );
+  bool checkPositionLimitViolation(const Eigen::VectorXd& joint_position, const double& position_tolerance = 0.0);
 
   /**
    * @brief checkPositionLimitViolation: check velocity limit violate, limit containts lower and upper limit
@@ -269,8 +261,7 @@ private:
    * @return true with velocity limit violation else false
    */
   bool checkVelocityLimitViolation(const std_msgs::Float64MultiArray& joint_velocity,
-                                   const double& velocity_tolerance = 0.0
-                                  );
+                                   const double& velocity_tolerance = 0.0);
 
   /**
    * @brief enforcePositionInLimits: enforced position to be in limit, limit containts lower and upper limit
@@ -278,10 +269,8 @@ private:
    * @param position_tolerance: tolerance in joint values after reaching minimum and maximum values
    * @param enforced_joint_position: enforced joint position when it reach to minimum or maximum values
    */
-  void enforcePositionInLimits(const Eigen::VectorXd& joint_position,
-                               Eigen::VectorXd& enforced_joint_position,
-                               const double& position_tolerance = 0.0
-                              );
+  void enforcePositionInLimits(const Eigen::VectorXd& joint_position, Eigen::VectorXd& enforced_joint_position,
+                               const double& position_tolerance = 0.0);
 
   /**
    * @brief enforceVelocityInLimits: enforced velocity to be in limit, limit containts lower and upper limit
@@ -291,8 +280,7 @@ private:
    */
   void enforceVelocityInLimits(const std_msgs::Float64MultiArray& joint_velocity,
                                std_msgs::Float64MultiArray& enforced_joint_velocity,
-                               const double& velocity_tolerance = 0.0
-                              );
+                               const double& velocity_tolerance = 0.0);
 
   /**
    * @brief checkInfinitesimalPose: check goal tolereance statisfied, check tolerance with goal_tolerance_ data member
@@ -302,7 +290,8 @@ private:
   bool checkInfinitesimalPose(const Eigen::VectorXd& pose);
 
   /**
-   * @brief transformStdVectorToEigenVector: tranform std vector to eigen vectors as std vectos are slow to random access
+   * @brief transformStdVectorToEigenVector: tranform std vector to eigen vectors as std vectos are slow to random
+   * access
    * @param vector: std vectors want to tranfrom
    * @return Eigen vectors transform from std vectos
    */
