@@ -2,7 +2,7 @@
 #include <ros/ros.h>
 #include <predictive_control/predictive_controller.h>
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
   try
   {

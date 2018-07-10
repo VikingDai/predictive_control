@@ -39,8 +39,7 @@
 #include <predictive_control/StaticCollisionObjectRequest.h>
 #include <predictive_control/StaticCollisionObjectResponse.h>
 
-
-class CollisionRobot: public predictive_configuration
+class CollisionRobot : public predictive_configuration
 {
   /**
     * Class used to generate bounding volume around robot body,
@@ -51,7 +50,6 @@ class CollisionRobot: public predictive_configuration
     */
 
 public:
-
   /**
    * @brief CollisionRobot: Default constructor, allocate memory
    */
@@ -74,8 +72,7 @@ public:
    * @param Transformation_Matrix: Transformation matrix between two concecutive frame
    */
   void updateCollisionVolume(const std::vector<Eigen::MatrixXd>& FK_Homogenous_Matrix,
-                             const std::vector<Eigen::MatrixXd>& Transformation_Matrix
-                             );
+                             const std::vector<Eigen::MatrixXd>& Transformation_Matrix);
 
   /**
    * @brief generateCollisionVolume: Create collsion matrix using forward kinematic relative to root link
@@ -83,9 +80,7 @@ public:
    * @param Transformation_Matrix: Transformation matrix between two concecutive frame
    */
   void generateCollisionVolume(const std::vector<Eigen::MatrixXd>& FK_Homogenous_Matrix,
-                             const std::vector<Eigen::MatrixXd>& Transformation_Matrix
-                             );
-
+                               const std::vector<Eigen::MatrixXd>& Transformation_Matrix);
 
   /**
    * @brief visualizeCollisionVolume: visulize collision ball on given position
@@ -93,10 +88,8 @@ public:
    * @param radius: Ball radius
    * @param ball_id: Ball id should be unique for each ball
    */
-  void visualizeCollisionVolume(const geometry_msgs::PoseStamped& center,
-                               const double& radius, const uint32_t& ball_id
-                               );
-
+  void visualizeCollisionVolume(const geometry_msgs::PoseStamped& center, const double& radius,
+                                const uint32_t& ball_id);
 
   /**
    * @brief computeCollisionCost: Computation collision distance cost,
@@ -106,18 +99,14 @@ public:
    * @param weight_factor: convergence rate
    */
   void computeCollisionCost(const std::map<std::string, geometry_msgs::PoseStamped> collision_matrix,
-                                       const double& collision_min_distance,
-                                       const double& weight_factor
-                                       );
+                            const double& collision_min_distance, const double& weight_factor);
 
   /**
    * @brief createStaticFrame: visulize intermidiate added frame, relative to root frame
    * @param stamped: Center position of ball
    * @param frame_name: Child frame name
    */
-  void createStaticFrame(const geometry_msgs::PoseStamped& stamped,
-                         const std::string& frame_name
-                         );
+  void createStaticFrame(const geometry_msgs::PoseStamped& stamped, const std::string& frame_name);
 
   /**
    * @brief getEuclideanDistance: compute 2D distance called EuclideanDistance
@@ -125,19 +114,16 @@ public:
    * @param pose_b: Pose of second point
    * @return distance between pose_a and pose_b
    */
-  static inline double getEuclideanDistance(const geometry_msgs::Pose& pose_a,
-                                     const geometry_msgs::Pose& pose_b
-                                     )
+  static inline double getEuclideanDistance(const geometry_msgs::Pose& pose_a, const geometry_msgs::Pose& pose_b)
   {
     ROS_DEBUG_STREAM("point_a:" << pose_a.position);
     ROS_DEBUG_STREAM("point_b:" << pose_b.position);
 
-    double distance = ( sqrt( (pose_a.position.x - pose_b.position.x) * (pose_a.position.x - pose_b.position.x) +
-                  (pose_a.position.y - pose_b.position.y) * (pose_a.position.y - pose_b.position.y) +
-                  (pose_a.position.z - pose_b.position.z) * (pose_a.position.z - pose_b.position.z)
-            ));
+    double distance = (sqrt((pose_a.position.x - pose_b.position.x) * (pose_a.position.x - pose_b.position.x) +
+                            (pose_a.position.y - pose_b.position.y) * (pose_a.position.y - pose_b.position.y) +
+                            (pose_a.position.z - pose_b.position.z) * (pose_a.position.z - pose_b.position.z)));
 
-    ROS_DEBUG_STREAM("getEuclideanDistance: ...  "<< distance);
+    ROS_DEBUG_STREAM("getEuclideanDistance: ...  " << distance);
     return distance;
   }
 
@@ -158,38 +144,31 @@ private:
   // static frame broadcaster
   tf2_ros::StaticTransformBroadcaster static_broadcaster_;
 
-
-
   /**
    * @brief transformKDLToEigenMatrix: transform KDL Frame to Eigen Matrix
    * @param frame KDL::Frame which containts Rotation Matrix and Traslation vector
    * @param matrix transformation matrix
    */
-  void transformKDLToEigenMatrix(const KDL::Frame& frame,
-                                 Eigen::MatrixXd& matrix
-                                 );
+  void transformKDLToEigenMatrix(const KDL::Frame& frame, Eigen::MatrixXd& matrix);
 
   /**
    * @brief transformEigenMatrixToKDL: transform Eigen Matrix to KDL Frame
    * @param matrix transformation matrix
    * @param frame KDL::Frame which containts Rotation Matrix and Traslation vector
    */
-  void transformEigenMatrixToKDL(const Eigen::MatrixXd& matrix,
-                                 KDL::Frame& frame
-                                 );
+  void transformEigenMatrixToKDL(const Eigen::MatrixXd& matrix, KDL::Frame& frame);
 
   /**
    * @brief clearDataMember: clear vectors means free allocated memory
    */
   void clearDataMember();
-
 };
 
-
 //------------------------------------------------------------------------------------------------------------------------------
-//------------------------------------- Static Collision Object Avoidance -----------------------------------------------------
+//------------------------------------- Static Collision Object Avoidance
+//-----------------------------------------------------
 //------------------------------------------------------------------------------------------------------------------------------
-class StaticCollision: public predictive_configuration
+class StaticCollision : public predictive_configuration
 {
   /**
     * Class used to generate bounding volume around static object,
@@ -199,7 +178,6 @@ class StaticCollision: public predictive_configuration
     */
 
 public:
-
   /**
    * @brief CollisionRobot: Default constructor, allocate memory
    */
@@ -227,7 +205,6 @@ public:
    */
   void generateStaticCollisionVolume();
 
-
   /**
    * @brief visualizeStaticCollisionVoulme: visulize static collision object
    * @param stamped: collsion object represented by size, pose, primitive_type, operation
@@ -243,10 +220,7 @@ public:
    */
   void computeStaticCollisionCost(const std::map<std::string, geometry_msgs::PoseStamped> static_collision_matrix,
                                   const std::map<std::string, geometry_msgs::PoseStamped> robot_collision_matrix,
-                                  const double& collision_threshold_distance,
-                                  const double& weight_factor
-                                 );
-
+                                  const double& collision_threshold_distance, const double& weight_factor);
 
   /** public data member*/
   // visulaize all volumes
@@ -280,38 +254,28 @@ private:
    * @param stamped_pose: Resultant poseStamed between source and target frame
    * @return: true if transform else false
    */
-  bool getTransform(const std::string& from,
-                    const std::string& to,
-                    geometry_msgs::PoseStamped& stamped_pose
-                    );
+  bool getTransform(const std::string& from, const std::string& to, geometry_msgs::PoseStamped& stamped_pose);
 
-  bool addStaticObjectServiceCB(predictive_control::StaticCollisionObjectRequest &request,
-                                predictive_control::StaticCollisionObjectResponse &response
-                                );
+  bool addStaticObjectServiceCB(predictive_control::StaticCollisionObjectRequest& request,
+                                predictive_control::StaticCollisionObjectResponse& response);
 
-  bool removeStaticObjectServiceCB(predictive_control::StaticCollisionObjectRequest &request,
-                                   predictive_control::StaticCollisionObjectResponse &response
-                                  );
+  bool removeStaticObjectServiceCB(predictive_control::StaticCollisionObjectRequest& request,
+                                   predictive_control::StaticCollisionObjectResponse& response);
 
-  bool removeAllStaticObjectsServiceCB(predictive_control::StaticCollisionObjectRequest &request,
-                                   predictive_control::StaticCollisionObjectResponse &response
-                                  );
+  bool removeAllStaticObjectsServiceCB(predictive_control::StaticCollisionObjectRequest& request,
+                                       predictive_control::StaticCollisionObjectResponse& response);
 
   /**
    * @brief createStaticFrame: visulize intermidiate added frame, relative to root frame
    * @param stamped: Center position of ball
    * @param frame_name: Child frame name
    */
-  void createStaticFrame(const geometry_msgs::PoseStamped& stamped,
-                         const std::string& frame_name
-                         );
-
+  void createStaticFrame(const geometry_msgs::PoseStamped& stamped, const std::string& frame_name);
 
   /**
    * @brief clearDataMember: clear vectors means free allocated memory
    */
   void clearDataMember();
-
 };
 
-#endif //PREDICTIVE_CONTROL_COLLISION_DETECTION_H_
+#endif  // PREDICTIVE_CONTROL_COLLISION_DETECTION_H_

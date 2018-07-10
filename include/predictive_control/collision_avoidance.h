@@ -46,7 +46,6 @@
 
 class CollisionAvoidance
 {
-
 public:
   CollisionAvoidance();
   ~CollisionAvoidance();
@@ -57,12 +56,11 @@ public:
 
   bool registerCollisionLinks();
 
-  bool registerCollisionOjbect(const std::string &obstacle_name);
+  bool registerCollisionOjbect(const std::string& obstacle_name);
 
   double getDistanceCostFunction();
 
 private:
-
   ros::NodeHandle nh_;
 
   std::string obstacle_name_;
@@ -77,7 +75,7 @@ private:
   interactive_markers::InteractiveMarkerServer* ia_server_;
   visualization_msgs::InteractiveMarker int_marker_;
   visualization_msgs::InteractiveMarker int_marker_menu_;
-  //interactive_markers::MenuHandler menu_handler_;
+  // interactive_markers::MenuHandler menu_handler_;
 
   // chain base_link
   std::string chain_base_link_;
@@ -111,23 +109,15 @@ private:
 
   void configureInteractiveMarker();
 
-
   bool addStaticObstacleServiceCallBack(predictive_control::StaticObstacleRequest& request,
                                         predictive_control::StaticObstacleResponse& response);
-
 
   bool deleteStaticObstacleServiceCallBack(predictive_control::StaticObstacleRequest& request,
                                            predictive_control::StaticObstacleResponse& response);
 
-  void readDataFromFile(const std::string& file_name,
-                        const std::string& object_name,
-                        moveit_msgs::CollisionObject &co);
+  void readDataFromFile(const std::string& file_name, const std::string& object_name, moveit_msgs::CollisionObject& co);
 
-  bool getTransform(const std::string& from,
-                    const std::string& to,
-                    geometry_msgs::PoseStamped& stamped_pose);
-
+  bool getTransform(const std::string& from, const std::string& to, geometry_msgs::PoseStamped& stamped_pose);
 };
 
-
-#endif //PREDICTIVE_CONTROL_COLLISION_AVOIDACE_H_
+#endif  // PREDICTIVE_CONTROL_COLLISION_AVOIDACE_H_

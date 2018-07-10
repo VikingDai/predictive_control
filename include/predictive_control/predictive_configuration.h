@@ -3,14 +3,14 @@
 #define PREDICTIVE_CONTROL_PREDICITVE_CONFIGURATION_H
 
 // ros includes
-#include<ros/ros.h>
+#include <ros/ros.h>
 
-//c++ includes
-#include<iostream>
-#include<string>
-#include<vector>
+// c++ includes
+#include <iostream>
+#include <string>
+#include <vector>
 #include <algorithm>
-#include <iomanip>	//print false or true
+#include <iomanip>  //print false or true
 #include <math.h>
 
 class predictive_configuration
@@ -23,7 +23,6 @@ class predictive_configuration
    */
 
 public:
-
   /** function member of class **/
 
   // constructor and distructor
@@ -42,7 +41,7 @@ public:
    * @param node_handle_name: node handler initialize from name, as parameter set inside that name
    * @return true all parameter initialize successfully else false
    */
-  bool initialize();  //const std::string& node_handle_name
+  bool initialize();  // const std::string& node_handle_name
 
   /**
    * @brief updateConfiguration: update configuration parameter with new parameter
@@ -86,7 +85,7 @@ public:
   std::vector<double> lsq_control_weight_factors_;
 
   // predictive control
-  double clock_frequency_;  //hz clock Frequency
+  double clock_frequency_;  // hz clock Frequency
   double sampling_time_;
 
   // self collision distance
@@ -105,9 +104,7 @@ public:
   double start_time_horizon_;
   double end_time_horizon_;
 
-
 private:
-
   /**
    * @brief free_allocated_memory: remove all allocated data just for memory management
    */
@@ -117,7 +114,6 @@ private:
    * @brief print_configuration_parameter: debug purpose print set data member of this class
    */
   void print_configuration_parameter();
-
 };
 
 #endif
